@@ -1,21 +1,7 @@
-"""HTTP error taxonomy.
-
-The important attribute here is ``close``. It splits errors into the two
-classes the whole design turns on:
-
-* ``close=False`` -- a *semantic* error. The message was framed correctly, we
-  read exactly the bytes it claimed, and the next byte in the stream is the
-  first byte of the next request. We can answer and stay on the line.
-* ``close=True`` -- a *framing* error. We no longer know where this message
-  ends, so we no longer know where the next one begins. Every byte after this
-  point is a guess. Answer, then hang up.
-"""
-
 from __future__ import annotations
 
 
 class HttpError(Exception):
-    """An error that maps onto a status code."""
 
     status = 500
     reason = "Internal Server Error"
@@ -61,7 +47,6 @@ class RequestTimeout(HttpError):
 
 
 class MalformedMessage(BadRequest):
-    """A 400 that costs the connection."""
 
     close = True
 

@@ -1,12 +1,3 @@
-"""Annotated hexdump of BHT/1 bytes.
-
-One renderer, two consumers: `bcurl -v` prints it live, and HEXDUMP.md is
-generated from it. The deliverable says that if you cannot annotate your own
-bytes, the spec is not finished -- so the annotator is written against the
-spec's field list, and any field it cannot name is a field the spec did not
-define properly.
-"""
-
 from __future__ import annotations
 
 import sys
@@ -36,7 +27,6 @@ class Annotation:
 
 
 def annotate(raw: bytes, *, preface: bool = False, base: int = 0) -> list[Annotation]:
-    """Annotate a whole byte stream: optional preface, then frames."""
     out: list[Annotation] = []
     pos = 0
     if preface and raw[:4] == PREFACE:

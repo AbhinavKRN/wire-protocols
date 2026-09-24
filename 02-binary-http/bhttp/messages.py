@@ -1,10 +1,3 @@
-"""Requests, responses, and the stream bookkeeping that assembles them.
-
-``MessageAssembler`` is where SPEC sections 3.1, 4 and 5 are enforced. It
-takes frames and gives back whole messages, and it is the only component that
-knows a message can span several frames.
-"""
-
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -65,7 +58,6 @@ class Response:
 
 @dataclass
 class ErrorMessage:
-    """A decoded ERROR frame."""
 
     status: int
     reason: str
@@ -102,15 +94,6 @@ def encode_error(status: int, reason: str, stream_id: int = 0) -> Frame:
 def _frames(
     head_type: FrameType, head_payload: bytes, body: bytes, stream_id: int, max_data: int
 ) -> list[Frame]:
-    """Head frame plus however many DATA frames the body needs.
-
-    The last frame gets END_MESSAGE. That single bit is the whole of what
-    HTTP/1.1 needed chunked encoding for.
-
-    ``max_data`` bounds DATA frames only. It is a sender's policy -- how
-    finely to slice a body -- and has nothing to do with the head, which is
-    bounded by the protocol's own MAX_FRAME_SIZE.
-    """
     if len(head_payload) > MAX_FRAME_SIZE:
         raise ValueError(
             f"head payload of {len(head_payload)} bytes exceeds MAX_FRAME_SIZE {MAX_FRAME_SIZE}"
@@ -175,8 +158,6 @@ def decode_error(payload: bytes, stream_id: int = 0) -> ErrorMessage:
 
 
 def validate_path(path: str) -> None:
-    """SPEC 5.1. Rejection here is the difference between a file server and
-    an arbitrary-file-read."""
     if not path:
         raise ValueError("path is empty")
     if not path.startswith("/"):
@@ -205,13 +186,6 @@ class _Pending:
 
 
 class MessageAssembler:
-    """Frames in, complete messages out.
-
-    Returns ``None`` for a frame that produced no message yet -- including an
-    unknown frame type, which is how SPEC 3.1's skip rule is honoured: the
-    reader has already consumed exactly its declared length, so ignoring the
-    object is the whole of "skip it cleanly".
-    """
 
     def __init__(self, role: str, *, max_body: int = DEFAULT_MAX_BODY):
         if role not in ("server", "client"):
@@ -225,13 +199,6 @@ class MessageAssembler:
         self._expected: dict[int, bool] = {}
 
     def open_stream(self, stream_id: int, *, expect_body: bool = True) -> None:
-        """Client-side: record a request we have sent, so that a response on
-        a stream we never opened can be recognised as bogus.
-
-        ``expect_body=False`` is for HEAD, where SPEC 5.6 requires the
-        response to declare a content-length for a body it must not send;
-        the 5.5 consistency check would otherwise fire on every HEAD.
-        """
         self._expected[stream_id] = expect_body
 
     def accept(self, frame: Frame) -> Request | Response | ErrorMessage | None:

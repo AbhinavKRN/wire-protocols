@@ -1,13 +1,3 @@
-"""The marking script from the brief, verbatim in spirit: one socket, six
-requests, and a check that the line is still up at the end.
-
-    python marking_script.py [port]
-
-Run it against a server started separately (`python -m calcserver`) so that
-the one-handshake claim is made across a real process boundary, not inside
-the test fixture that also owns the server.
-"""
-
 from __future__ import annotations
 
 import socket

@@ -1,12 +1,3 @@
-"""SPEC 3.1: a receiver meeting a frame type it does not know MUST skip it
-cleanly.
-
-This is the line the brief says may not be skipped, so it gets its own file.
-An extensibility clause that is written down but never exercised is a wish;
-the only thing that makes it a mechanism is a test that sends a frame from
-the future and watches the connection carry on.
-"""
-
 from __future__ import annotations
 
 import contextlib
@@ -53,8 +44,6 @@ class ServerSkipsUnknownFrames(unittest.TestCase):
             self.assertEqual(stats["responses"], 2, "the unknown frame got no reply")
 
     def test_unknown_frame_with_a_large_payload_is_stepped_over_exactly(self):
-        """The skip has to consume the payload precisely; one byte out and
-        the next frame header is read from the middle of the last one."""
         with ServerFixture() as server, RawPeer(server.address) as peer:
             peer.send_frames([future_frame(payload=bytes(range(256)) * 40)])
             peer.send_frames(encode_request(Request(path="/hello.txt"), 1))
@@ -73,7 +62,6 @@ class ServerSkipsUnknownFrames(unittest.TestCase):
             )
 
     def test_unknown_frame_does_not_disturb_a_message_in_progress(self):
-        """Interleaved between a request head and its body."""
         with ServerFixture() as server, RawPeer(server.address) as peer:
             head, data = encode_request(Request(method="POST", path="/hello.txt", body=b"xy"), 1)
             peer.send_frames([head, future_frame(stream_id=1), data])
@@ -82,8 +70,6 @@ class ServerSkipsUnknownFrames(unittest.TestCase):
             self.assertTrue(peer.is_open())
 
     def test_unassigned_flag_bits_and_reserved_byte_are_ignored(self):
-        """SPEC 2.3. A v2 sender setting a flag we have never heard of must
-        not be treated as an error."""
         with ServerFixture() as server, RawPeer(server.address) as peer:
             original = encode_request(Request(path="/hello.txt"), 1)[0]
             polluted = Frame(
@@ -101,9 +87,6 @@ class ServerSkipsUnknownFrames(unittest.TestCase):
 
 
 class FutureServer:
-    """A server from a later version of the protocol: it sends frame types
-    and flags this client has never heard of, around a perfectly ordinary
-    response."""
 
     def __init__(self, response: Response):
         self.response = response
@@ -158,7 +141,6 @@ class ClientSkipsUnknownFrames(unittest.TestCase):
 
 
 class AssemblerSkipTests(unittest.TestCase):
-    """The same rule at the unit level, away from any socket."""
 
     def test_assembler_counts_and_ignores_unknown_types(self):
         assembler = MessageAssembler("server")

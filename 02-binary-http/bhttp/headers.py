@@ -1,15 +1,3 @@
-"""Header encoding: HPACK's first two ideas and nothing else.
-
-1. Number the names you actually send, and send the number.
-2. Length-prefix everything that is left.
-
-That is enough to stop shipping `Content-Length: ` as fifteen ASCII bytes on
-every single message, and it fits in an evening. What it deliberately leaves
-out is HPACK's third idea, the dynamic table, which is where the complexity
-(and the CRIME-style attack surface) lives. The `0x01`-`0x7F` prefix range is
-left unassigned so that a version 2 has somewhere to put it.
-"""
-
 from __future__ import annotations
 
 from .frame import ByteReader
@@ -37,7 +25,7 @@ TOKEN_CHARS = frozenset("!#$%&'*+-.^_`|~0123456789abcdefghijklmnopqrstuvwxyz")
 
 
 class HeaderFormatError(ValueError):
-    """Malformed header block. Callers turn this into a 400."""
+    pass
 
 
 def encode_header_block(items: list[tuple[str, str]]) -> bytes:

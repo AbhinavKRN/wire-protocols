@@ -1,7 +1,3 @@
-"""Codec unit tests for behaviour the vectors do not reach: the encoder's
-refusals, the reader's incrementality, and the limits.
-"""
-
 from __future__ import annotations
 
 import unittest

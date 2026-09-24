@@ -1,12 +1,3 @@
-"""BHT/1 frame layer: the 8-byte header and the incremental reader.
-
-No sockets here either. ``FrameReader`` is fed bytes and yields frames, and
-it consumes exactly ``Length`` payload bytes per frame -- which is what makes
-SPEC section 3.1 (skip unknown frame types cleanly) structural rather than
-aspirational. The reader does not need to understand a frame to be able to
-step over it, because the length is decided before the type is read.
-"""
-
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -77,7 +68,6 @@ class Frame:
 
 
 def decode_header(data: bytes) -> tuple[int, int, int, int, int]:
-    """(length, type, flags, reserved, stream_id) from 8 bytes."""
     if len(data) < HEADER_SIZE:
         raise ValueError("frame header is 8 bytes")
     length = (data[0] << 16) | (data[1] << 8) | data[2]
@@ -86,11 +76,6 @@ def decode_header(data: bytes) -> tuple[int, int, int, int, int]:
 
 
 class FrameReader:
-    """Bytes in, frames out.
-
-    ``expect_preface`` makes the reader consume and verify the 4-byte
-    connection preface before the first frame; servers set it, clients do not.
-    """
 
     def __init__(self, *, expect_preface: bool = False, max_frame_size: int = MAX_FRAME_SIZE):
         self._buf = bytearray()
@@ -109,7 +94,6 @@ class FrameReader:
         return bool(self._buf)
 
     def next_frame(self) -> Frame | None:
-        """The next complete frame, or None if more bytes are needed."""
         if self._need_preface:
             if len(self._buf) < len(PREFACE):
                 if not PREFACE.startswith(bytes(self._buf)):
@@ -141,12 +125,6 @@ class FrameReader:
 
 
 class ByteReader:
-    """Bounds-checked cursor over a frame payload.
-
-    Every read that could run off the end goes through here, so "the payload
-    ended mid-field" is one error raised in one place instead of an IndexError
-    somewhere interesting.
-    """
 
     def __init__(self, data: bytes, *, stream_id: int = 0):
         self._data = data
@@ -189,4 +167,4 @@ class ByteReader:
 
 
 class StreamUnderflow(ValueError):
-    """Raised by ByteReader; callers translate it into a 400."""
+    pass

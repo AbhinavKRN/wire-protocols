@@ -1,16 +1,4 @@
 #!/usr/bin/env python3
-"""bcurl -- a BHT/1 client.
-
-    ./bcurl -v localhost:9000/index.html
-
-Builds the binary request frame, reads the response, writes the body to
-stdout, hexdumps every frame under -v, and exits non-zero on 4xx/5xx.
-
-It never opens a second connection. Give it several URLs and they are
-pipelined down the one socket on increasing stream ids, which is the feature
-the stream id field exists for.
-"""
-
 from __future__ import annotations
 
 import argparse
@@ -106,7 +94,6 @@ class Bcurl:
         self.trace = trace or sys.stderr
 
     def fetch(self, targets: list[Target], *, method: str = "GET") -> Result:
-        """One connection, every target, responses matched by stream id."""
         result = Result()
         authority = targets[0].authority
         host, port = targets[0].host, targets[0].port
@@ -207,7 +194,7 @@ def exit_code_for(result: Result) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(prog="bcurl", description=__doc__)
+    parser = argparse.ArgumentParser(prog="bcurl", description="a BHT/1 client")
     parser.add_argument("url", nargs="+", help="[bht://]host[:port]/path")
     parser.add_argument("-v", "--verbose", action="store_true", help="hexdump every frame")
     parser.add_argument("-I", "--head", action="store_true", help="send HEAD instead of GET")

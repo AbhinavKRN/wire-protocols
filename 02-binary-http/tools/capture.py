@@ -1,14 +1,4 @@
 #!/usr/bin/env python3
-"""Capture one real BHT/1 exchange and write HEXDUMP.md.
-
-    python tools/capture.py
-
-Starts bserve on an ephemeral port, performs one request with a plain socket
-while recording every byte in both directions, and renders the result with
-the same annotator `bcurl -v` uses. The bytes in HEXDUMP.md are therefore
-traffic, not an illustration.
-"""
-
 from __future__ import annotations
 
 import socket

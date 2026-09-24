@@ -1,5 +1,3 @@
-"""Fixtures for the BHT/1 socket-level tests."""
-
 from __future__ import annotations
 
 import contextlib
@@ -18,7 +16,6 @@ WWW = Path(__file__).resolve().parent.parent / "www"
 
 
 class ServerFixture:
-    """A bserve on an ephemeral port, torn down on exit."""
 
     def __init__(self, root: str | Path = WWW, **config_kwargs):
         self.server = Bserve(root, 0, config=Config(**config_kwargs))
@@ -31,9 +28,6 @@ class ServerFixture:
 
 
 class RawPeer:
-    """A socket that speaks frames, with no opinions about whether they are
-    sensible. Needed because the point of most of these tests is to send
-    something a conformant client would refuse to build."""
 
     def __init__(self, address: tuple[str, int], *, preface: bool = True, timeout: float = 5.0):
         self.sock = socket.create_connection(address, timeout=timeout)
@@ -59,7 +53,6 @@ class RawPeer:
             self.reader.feed(data)
 
     def read_message_frames(self) -> list[Frame]:
-        """Frames up to and including the one with END_MESSAGE."""
         frames = [self.read_frame()]
         while not frames[-1].end_message:
             frames.append(self.read_frame())

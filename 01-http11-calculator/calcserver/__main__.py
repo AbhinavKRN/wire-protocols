@@ -1,5 +1,3 @@
-"""python -m calcserver [--port 8080]"""
-
 from __future__ import annotations
 
 import argparse
@@ -12,7 +10,9 @@ from .server import Server
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(prog="calcserver", description=__doc__)
+    parser = argparse.ArgumentParser(
+        prog="calcserver", description="HTTP/1.1 calculator server"
+    )
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=8080)
     parser.add_argument("--idle-timeout", type=float, default=15.0)

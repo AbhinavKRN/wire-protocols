@@ -1,11 +1,3 @@
-"""bserve and bcurl against each other, over real sockets.
-
-These tests are the weaker half of the conformance story -- two halves of one
-codebase agreeing with each other proves less than the vectors do. What they
-do prove is that the socket plumbing, the stream bookkeeping and the exit
-codes behave, and that the connection is genuinely reused.
-"""
-
 from __future__ import annotations
 
 import tempfile
@@ -66,7 +58,6 @@ class FetchTests(unittest.TestCase):
             self.assertEqual(result.frames_received, 1)
 
     def test_three_urls_share_one_connection(self):
-        """`and never open a second connection`."""
         with ServerFixture() as server:
             targets = [
                 Target(*server.address, "/index.html"),
@@ -141,7 +132,6 @@ class CommandLineTests(unittest.TestCase):
             self.assertEqual(code, EXIT_CLIENT_ERROR)
 
     def test_main_refuses_two_authorities(self):
-        """Because honouring it would mean opening a second connection."""
         self.assertEqual(main(["localhost:9000/a", "localhost:9001/b"]), 2)
 
     def test_verbose_hexdump_names_every_field(self):
@@ -169,8 +159,6 @@ class CommandLineTests(unittest.TestCase):
 
 class ResponseShapeTests(unittest.TestCase):
     def test_response_headers_all_come_from_the_static_table(self):
-        """Every name bserve sends is one of the ten, so no response head
-        contains a literal name. That is the whole point of numbering them."""
         with ServerFixture() as server:
             result = Bcurl().fetch([Target(*server.address, "/index.html")])
             head = result.exchanges[0].response

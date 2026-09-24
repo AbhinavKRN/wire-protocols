@@ -1,9 +1,3 @@
-"""Tests for peers that are slow, greedy, pipelined, or hostile.
-
-A server that only survives well-formed requests arriving one per packet has
-not implemented HTTP/1.1; it has implemented the happy path.
-"""
-
 from __future__ import annotations
 
 import threading
@@ -23,7 +17,6 @@ EXPECTED_STATUSES = [200, 200, 200, 400, 404, 405]
 
 
 class DeliveryShapeTests(unittest.TestCase):
-    """The same six requests, delivered in three different shapes."""
 
     def test_one_byte_at_a_time(self):
         with ServerFixture() as server, RawClient(server.address) as client:
@@ -45,7 +38,6 @@ class DeliveryShapeTests(unittest.TestCase):
             self.assertEqual(server.stats.snapshot()["accepted"], 1)
 
     def test_pipelining_all_six_in_one_write(self):
-        """Six requests, one send(), answers in order, one connection."""
         with ServerFixture() as server, RawClient(server.address) as client:
             client.send(b"".join(SIX_REQUESTS))
             responses = client.read_responses(6)
@@ -58,7 +50,6 @@ class DeliveryShapeTests(unittest.TestCase):
             self.assertEqual(stats, {"accepted": 1, "responses": 6, "active": 1})
 
     def test_request_split_across_the_header_terminator(self):
-        """The nastiest split: CRLF | CRLF."""
         request = SIX_REQUESTS[0]
         for cut in (len(request) - 3, len(request) - 2, len(request) - 1):
             with (
@@ -74,12 +65,6 @@ class DeliveryShapeTests(unittest.TestCase):
 
 class BodyFramingTests(unittest.TestCase):
     def test_a_body_is_not_a_request(self):
-        """The smuggling case.
-
-        A request whose body happens to contain a valid-looking request must
-        produce exactly one response. If the server answers twice, it parsed
-        somebody's payload as a command -- which is the entire CVE class.
-        """
         smuggled = b"GET /mul?a=6&b=7 HTTP/1.1\r\nHost: localhost\r\n\r\n"
         wire = (
             b"POST /add HTTP/1.1\r\nHost: localhost\r\n"
@@ -164,8 +149,6 @@ class ConnectionLifetimeTests(unittest.TestCase):
 
 
 class HostileInputTests(unittest.TestCase):
-    """Each of these is a 400-class answer followed by a hang-up, because
-    after any of them we no longer know where the next message starts."""
 
     def assert_answered_then_closed(self, wire: bytes, status: int, **fixture_kwargs):
         with ServerFixture(**fixture_kwargs) as server, RawClient(server.address) as client:

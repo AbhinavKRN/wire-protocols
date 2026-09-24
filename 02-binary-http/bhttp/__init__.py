@@ -1,9 +1,3 @@
-"""BHT/1 codec. Pure functions over bytes; not one socket in the package.
-
-The wire format is defined in ../SPEC.md and this package is meant to be
-readable next to it.
-"""
-
 from .errors import BhttpError, ConnectionFailure, StreamFailure
 from .frame import (
     FLAG_END_MESSAGE,

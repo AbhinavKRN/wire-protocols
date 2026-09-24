@@ -1,16 +1,3 @@
-"""Per-connection driver: the only place in Part A that touches a socket.
-
-The loop below is the whole point of the assignment:
-
-    drain every complete request already in the buffer
-    send the answers, in arrival order
-    only then, recv() more bytes
-
-Calling ``recv()`` while a complete message is still buffered is the bug this
-shape makes unrepresentable -- and it is also, unchanged, the implementation
-of pipelining.
-"""
-
 from __future__ import annotations
 
 import contextlib
@@ -69,7 +56,6 @@ class ConnectionHandler:
             self._close()
 
     def _drain(self, parser: RequestParser) -> tuple[list[bytes], bool]:
-        """Every complete request currently in the buffer, answered in order."""
         out: list[bytes] = []
         while True:
             try:

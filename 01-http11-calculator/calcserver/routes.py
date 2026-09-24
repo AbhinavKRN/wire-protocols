@@ -1,17 +1,3 @@
-"""The calculator itself -- the least interesting file in the project.
-
-Routing decisions worth defending:
-
-* Path is checked before method, so ``POST /pow`` is a 404 and ``POST /add``
-  is a 405. You cannot be told which methods a resource allows until it is
-  established that the resource exists.
-* Unknown query parameters are rejected rather than ignored. This is a
-  teaching server for a strict protocol; silently discarding ``?a=1&bb=2``
-  would answer a question the client did not ask.
-* Operands are bounded in length. Python integers are arbitrary precision,
-  so ``a`` with a million digits is a free CPU burn for the sender.
-"""
-
 from __future__ import annotations
 
 from collections.abc import Callable

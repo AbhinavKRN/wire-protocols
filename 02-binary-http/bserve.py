@@ -1,13 +1,4 @@
 #!/usr/bin/env python3
-"""bserve -- a BHT/1 static file server.
-
-    ./bserve ./www 9000
-
-Accepts a TCP connection, reads binary request frames, maps the path to a
-file under a root, replies with status, headers and the bytes, and keeps the
-connection open.
-"""
-
 from __future__ import annotations
 
 import argparse
@@ -51,11 +42,6 @@ log = logging.getLogger("bserve")
 
 
 class StaticFiles:
-    """Maps a request path to a file, or refuses to.
-
-    This class is the security boundary of the whole program. Everything it
-    does is a way of saying: the peer supplies a *name*, never a path.
-    """
 
     def __init__(self, root: Path, *, index: str = DEFAULT_INDEX):
         self.root = Path(root).resolve(strict=True)
@@ -126,7 +112,6 @@ class Stats:
 
 
 class Connection:
-    """One TCP connection, many streams, exactly one preface."""
 
     def __init__(self, sock: socket.socket, addr, files: StaticFiles, config: Config, stats):
         self.sock = sock
@@ -363,7 +348,9 @@ class Bserve:
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(prog="bserve", description=__doc__)
+    parser = argparse.ArgumentParser(
+        prog="bserve", description="a BHT/1 static file server"
+    )
     parser.add_argument("root", help="document root")
     parser.add_argument("port", nargs="?", type=int, default=9000)
     parser.add_argument("--host", default="127.0.0.1")

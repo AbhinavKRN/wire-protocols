@@ -1,10 +1,3 @@
-"""Parser unit tests: every one of these is about message boundaries.
-
-No sockets appear here. That is the payoff of keeping the parser I/O-free --
-"what happens if the body arrives one byte at a time" is a loop, not a
-network condition you have to arrange.
-"""
-
 from __future__ import annotations
 
 import unittest
@@ -125,7 +118,6 @@ class HeaderBlockTests(unittest.TestCase):
 
 
 class FramingTests(unittest.TestCase):
-    """Where does this request end and the next one begin."""
 
     def test_consumes_exactly_content_length_bytes(self):
         body = b"0123456789"
@@ -151,7 +143,6 @@ class FramingTests(unittest.TestCase):
         self.assertEqual(len(requests), 6)
 
     def test_one_byte_at_a_time(self):
-        """The adversarial case: no chunk boundary coincides with anything."""
         wire = GET_ADD + GET_SUB
         parser = RequestParser()
         seen = []
@@ -215,13 +206,6 @@ class FramingTests(unittest.TestCase):
 
 
 class DeferredErrorTests(unittest.TestCase):
-    """A semantic error must not desynchronise the stream.
-
-    Missing Host is discovered while parsing the head, but the body has not
-    been read off the wire yet. Raising immediately would leave those body
-    bytes to be parsed as the next request line -- and then every subsequent
-    request on the connection is garbage.
-    """
 
     def test_missing_host_is_raised_only_after_the_body_is_consumed(self):
         wire = (

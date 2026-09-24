@@ -1,15 +1,3 @@
-"""Conformance vectors: the decoder judged against hand-written bytes.
-
-Not one expectation in this file comes from our own encoder. Testing a codec
-by round-tripping it through itself proves only that it is self-consistent,
-which is exactly the failure the brief warns about: "a client that only works
-against your own server is an implementation, not a protocol".
-
-The vectors are hex literals in tests/vectors/*.jsonl with their decoded form
-written out by hand. Anyone implementing BHT/1 from SPEC.md can run the same
-files against their own code.
-"""
-
 from __future__ import annotations
 
 import json
@@ -40,7 +28,6 @@ def load(name: str) -> list[dict]:
 
 
 def drive(data: bytes, vector: dict, *, chunk: int = 0):
-    """Feed bytes through the real pipeline and collect what comes out."""
     role = vector["role"]
     wants_preface = role == "server" and vector.get("preface", True)
     reader = FrameReader(expect_preface=wants_preface)
@@ -106,19 +93,12 @@ class ValidVectorTests(unittest.TestCase):
                 self.check(vector)
 
     def test_every_vector_survives_one_byte_at_a_time(self):
-        """The reader must be incremental, not just correct on whole blobs."""
         for name in ("requests.jsonl", "responses.jsonl"):
             for vector in load(name):
                 with self.subTest(f"{name}: {vector['name']}"):
                     self.check(vector, chunk=1)
 
     def test_canonical_vectors_are_reproduced_byte_for_byte(self):
-        """The encoder is checked against the literals too.
-
-        A vector marked canonical is what our encoder must emit for that
-        message. This is the direction that catches an encoder and decoder
-        that are wrong in the same way.
-        """
         for name in ("requests.jsonl", "responses.jsonl"):
             for vector in load(name):
                 if not vector.get("canonical"):
@@ -154,7 +134,6 @@ class ValidVectorTests(unittest.TestCase):
 
 
 class InvalidVectorTests(unittest.TestCase):
-    """Every input SPEC section 9 says a conformant receiver must reject."""
 
     def test_invalid_vectors_are_rejected(self):
         for vector in load("invalid.jsonl"):
@@ -165,11 +144,6 @@ class InvalidVectorTests(unittest.TestCase):
                 self.assertEqual(caught.exception.status, vector["status"])
 
     def test_a_stream_failure_leaves_the_connection_usable(self):
-        """The distinction the taxonomy exists for.
-
-        A stream-level rejection must not poison the connection: the frame
-        boundaries were never in question, so the next request still parses.
-        """
         bad = unhex("00 00 05 01 01 00 00 01  00 00 01 2f 00")
         good = unhex("00 00 09 01 01 00 00 03  01 00 01 2f 01 83 00 01 78")
 

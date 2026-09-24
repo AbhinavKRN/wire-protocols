@@ -1,11 +1,3 @@
-"""Response serialisation.
-
-Every response this server emits carries a Content-Length. That is the same
-promise we demand of clients: the receiver must be able to find the end of
-this message without waiting for the connection to close, because the
-connection is not going to close.
-"""
-
 from __future__ import annotations
 
 from dataclasses import dataclass, field

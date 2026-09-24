@@ -1,12 +1,3 @@
-"""Accept loop and lifecycle.
-
-Thread per connection, deliberately. An event loop would serve more
-connections, but it would also smear the message-framing state machine across
-a dispatcher, and the framing state machine is the thing being demonstrated.
-The parser is I/O-free precisely so that swapping this file for a selector
-loop changes nothing about how messages are found.
-"""
-
 from __future__ import annotations
 
 import contextlib
@@ -20,8 +11,6 @@ from .routes import Router
 
 
 class Stats:
-    """Connection accounting. The marking script asks for exactly this:
-    one TCP handshake, six responses."""
 
     def __init__(self):
         self._lock = threading.Lock()

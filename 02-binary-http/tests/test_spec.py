@@ -1,10 +1,3 @@
-"""The spec is the deliverable, so it is treated as a source file.
-
-These tests parse SPEC.md and compare the constants it publishes against the
-ones the code uses. A spec that has drifted from the implementation is worse
-than no spec, because a stranger implementing from it has no way to know.
-"""
-
 from __future__ import annotations
 
 import re
@@ -49,13 +42,11 @@ class SpecMatchesCodeTests(unittest.TestCase):
         self.assertIn(f"| Maximum path length | {MAX_PATH} bytes |", SPEC)
 
     def test_the_skip_rule_is_still_a_must(self):
-        """If this sentence ever softens, the extensibility story is gone."""
         self.assertRegex(
             SPEC, r"receiver that meets a frame type it does not know MUST skip it\s+cleanly"
         )
 
     def test_every_conformance_item_has_a_vector(self):
-        """SPEC section 9 promises machine-readable vectors for its list."""
         items = re.findall(r"^\d+\. ", SPEC[SPEC.index("## 9. Conformance") :], re.MULTILINE)
         vectors = (
             Path(__file__).resolve().parent / "vectors" / "invalid.jsonl"

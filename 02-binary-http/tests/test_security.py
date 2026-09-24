@@ -1,11 +1,3 @@
-"""A static file server is a program that hands out files on request from
-strangers. These are the requests it must not honour.
-
-Every hostile frame here is assembled by hand rather than with
-``encode_request``, because our own encoder refuses to build most of them --
-and an attacker is not using our encoder.
-"""
-
 from __future__ import annotations
 
 import os
@@ -24,7 +16,6 @@ from support import RawPeer, ServerFixture, unhex
 
 
 def hostile_request(path: str, *, stream_id: int = 1, method: int = 0x01) -> Frame:
-    """A REQUEST frame built straight from bytes, validator bypassed."""
     encoded = path.encode("latin-1")
     payload = bytes([method]) + len(encoded).to_bytes(2, "big") + encoded + b"\x00"
     return Frame(
@@ -33,7 +24,6 @@ def hostile_request(path: str, *, stream_id: int = 1, method: int = 0x01) -> Fra
 
 
 class PathTraversalTests(unittest.TestCase):
-    """Each of these is an attempt to name a file outside the document root."""
 
     def assert_rejected(self, path: str, status: int = 400) -> None:
         with ServerFixture() as server, RawPeer(server.address) as peer:
@@ -85,7 +75,6 @@ class PathTraversalTests(unittest.TestCase):
         self.assert_rejected("/hello%00.txt")
 
     def test_absolute_unix_path_is_just_a_name(self):
-        """A leading slash is the root of the document root, not of the disk."""
         self.assert_rejected("//etc/passwd", status=404)
 
     def test_a_long_path_is_refused_before_it_is_resolved(self):
@@ -111,7 +100,6 @@ class SymlinkTests(unittest.TestCase):
 
 
 class FrameLevelAttackTests(unittest.TestCase):
-    """Failures where frame boundaries are in doubt: answer, then hang up."""
 
     def test_oversized_frame_length_is_refused_without_buffering(self):
         with ServerFixture() as server, RawPeer(server.address) as peer:

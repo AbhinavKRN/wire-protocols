@@ -1,20 +1,3 @@
-"""The marking script, run as a test.
-
-    s = socket.create_connection(("localhost", 8080))
-
-    GET /add?a=2&b=3   -> 200  5
-    GET /sub?a=10&b=4  -> 200  6
-    GET /mul?a=6&b=7   -> 200  42
-    GET /div?a=1&b=0   -> 400
-    GET /pow?a=2&b=8   -> 404
-    POST /add          -> 405
-
-    socket still open: True
-    1 TCP handshake, 6 responses
-
-The last two lines are the assignment. The first six are arithmetic.
-"""
-
 from __future__ import annotations
 
 import unittest
@@ -64,7 +47,6 @@ class MarkingScriptTests(unittest.TestCase):
 
 
 class FeatureSetTests(unittest.TestCase):
-    """The full table from the brief, all on one connection."""
 
     def test_every_listed_case(self):
         cases = [

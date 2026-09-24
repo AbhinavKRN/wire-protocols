@@ -1,24 +1,3 @@
-"""Incremental HTTP/1.1 request parser.
-
-There is not a single socket call in this module, and that is deliberate: the
-hard part of HTTP/1.1 is not I/O, it is deciding where one message stops. That
-decision is a pure function of the bytes received so far, so it is written and
-tested as one.
-
-Contract
---------
-``feed()`` appends whatever ``recv()`` happened to hand you -- a byte, a
-packet, three requests at once. ``next_request()`` returns the next *complete*
-message and consumes exactly its bytes, or returns ``None`` to mean "the
-answer is not knowable yet, get more data". Byte n+1 belongs to somebody else
-and is left in the buffer untouched.
-
-The caller's loop is therefore forced into the correct shape: drain
-``next_request()`` until it returns ``None``, and only then call ``recv()``
-again. Pipelining is not a feature that gets added later; it is what that loop
-does when two requests show up in the same packet.
-"""
-
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -52,11 +31,6 @@ KNOWN_METHODS = frozenset(
 
 @dataclass(frozen=True)
 class Limits:
-    """Every one of these is a denial-of-service bound, not a style choice.
-
-    A parser without limits will happily buffer bytes until the process dies,
-    on the word of a peer who has not even sent a complete request yet.
-    """
 
     max_request_line: int = 8 * 1024
     max_head: int = 16 * 1024
@@ -71,7 +45,6 @@ DEFAULT_LIMITS = Limits()
 
 @dataclass
 class _Head:
-    """A request line plus headers, parsed, with its body still on the wire."""
 
     method: str
     target: str
@@ -87,7 +60,6 @@ class _Head:
 
 
 class RequestParser:
-    """Feed it bytes, take complete requests out."""
 
     def __init__(self, limits: Limits = DEFAULT_LIMITS):
         self.limits = limits
@@ -106,7 +78,6 @@ class RequestParser:
 
     @property
     def mid_message(self) -> bool:
-        """True if a peer has started a request but not finished it."""
         return self._head is not None or bool(self._buf)
 
     def discard(self) -> None:
@@ -115,11 +86,6 @@ class RequestParser:
         self._head = None
 
     def next_request(self) -> Request | None:
-        """One complete request, or None if more bytes are needed.
-
-        Raises HttpError. Whether the connection survives that error is the
-        error's own ``close`` attribute, not this function's business.
-        """
         if self._head is None:
             head_bytes = self._take_head()
             if head_bytes is None:
@@ -267,7 +233,6 @@ class RequestParser:
         return Headers(items)
 
     def _decide_framing(self, headers: Headers) -> tuple[str, int]:
-        """Answer the only question that matters: how long is the body?"""
         has_te = "transfer-encoding" in headers
         has_cl = "content-length" in headers
 
@@ -313,13 +278,6 @@ class RequestParser:
         return body
 
     def _take_chunked_body(self, head: _Head) -> bytes | None:
-        """Decode a chunked body if all of it has arrived.
-
-        Re-scans from the start of the body on every call rather than keeping
-        a resumable cursor. That is O(body) work per recv, bounded by
-        ``max_body`` -- cheap at this scale, and it keeps the decoder a plain
-        function that a reader can check by eye.
-        """
         buf = self._buf
         pos = 0
         out = bytearray()

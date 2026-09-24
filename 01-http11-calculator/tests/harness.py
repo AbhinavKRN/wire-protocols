@@ -1,10 +1,3 @@
-"""Test harness: an in-process server and a client that frames properly.
-
-The client here reads responses by Content-Length rather than by slurping
-until EOF, because on a keep-alive connection there is no EOF to slurp until.
-It is the same problem as the server's, mirrored -- which is the point.
-"""
-
 from __future__ import annotations
 
 import contextlib
@@ -21,7 +14,6 @@ logging.getLogger("calcserver").propagate = False
 
 
 class ServerFixture:
-    """Starts a server on an ephemeral port; stops it on exit."""
 
     def __init__(self, **config_kwargs):
         self.server = Server("127.0.0.1", 0, config=Config(**config_kwargs))
@@ -54,7 +46,6 @@ class PeerClosed(Exception):
 
 
 class RawClient:
-    """A socket and a response framer. No conveniences on purpose."""
 
     def __init__(self, address: tuple[str, int], timeout: float = 5.0):
         self.sock = socket.create_connection(address, timeout=timeout)
@@ -85,12 +76,6 @@ class RawClient:
         self._buf += data
 
     def read_response(self, *, has_body: bool = True) -> HttpResponse:
-        """Read one response, framed by Content-Length.
-
-        ``has_body=False`` is for HEAD: the response announces the length of
-        a body it is forbidden to send, and a client that waits for those
-        bytes deadlocks against a server that is behaving correctly.
-        """
         while (index := self._buf.find(b"\r\n\r\n")) == -1:
             self._fill()
         head = bytes(self._buf[:index]).decode("latin-1")
@@ -119,11 +104,6 @@ class RawClient:
         return len(self._buf)
 
     def is_open(self, wait: float = 0.3) -> bool:
-        """True if the server has not hung up.
-
-        A closed connection shows up as "readable, and reads zero bytes".
-        Readable-with-data means it is open and has something for us.
-        """
         readable, _, _ = select.select([self.sock], [], [], wait)
         if not readable:
             return True

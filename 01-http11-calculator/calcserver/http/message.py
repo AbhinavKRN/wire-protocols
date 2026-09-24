@@ -1,17 +1,9 @@
-"""Parsed request objects and a case-insensitive header collection."""
-
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 
 
 class Headers:
-    """Case-insensitive, order-preserving, duplicate-preserving field list.
-
-    Duplicates are kept rather than collapsed: the number of times a field
-    appears is itself information the parser needs (two ``Content-Length``
-    headers is a request-smuggling attempt, not a typo).
-    """
 
     __slots__ = ("_items", "_index")
 
@@ -44,7 +36,6 @@ class Headers:
         return f"Headers({self._items!r})"
 
     def tokens(self, name: str) -> set[str]:
-        """Comma-separated list-valued field, lowercased (e.g. Connection)."""
         out: set[str] = set()
         for value in self.get_all(name):
             out.update(token.strip().lower() for token in value.split(",") if token.strip())
