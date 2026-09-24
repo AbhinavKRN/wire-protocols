@@ -1,0 +1,63 @@
+"""BHT/1 codec. Pure functions over bytes; not one socket in the package.
+
+The wire format is defined in ../SPEC.md and this package is meant to be
+readable next to it.
+"""
+
+from .errors import BhttpError, ConnectionFailure, StreamFailure
+from .frame import (
+    FLAG_END_MESSAGE,
+    HEADER_SIZE,
+    MAX_FRAME_SIZE,
+    PREFACE,
+    ByteReader,
+    Frame,
+    FrameReader,
+    FrameType,
+    decode_header,
+)
+from .headers import STATIC_TABLE, decode_header_block, encode_header_block
+from .messages import (
+    ErrorMessage,
+    MessageAssembler,
+    Method,
+    Request,
+    Response,
+    decode_error,
+    decode_request_head,
+    decode_response_head,
+    encode_error,
+    encode_request,
+    encode_response,
+    validate_path,
+)
+
+__all__ = [
+    "FLAG_END_MESSAGE",
+    "HEADER_SIZE",
+    "MAX_FRAME_SIZE",
+    "PREFACE",
+    "STATIC_TABLE",
+    "BhttpError",
+    "ByteReader",
+    "ConnectionFailure",
+    "ErrorMessage",
+    "Frame",
+    "FrameReader",
+    "FrameType",
+    "MessageAssembler",
+    "Method",
+    "Request",
+    "Response",
+    "StreamFailure",
+    "decode_error",
+    "decode_header",
+    "decode_header_block",
+    "decode_request_head",
+    "decode_response_head",
+    "encode_error",
+    "encode_header_block",
+    "encode_request",
+    "encode_response",
+    "validate_path",
+]
