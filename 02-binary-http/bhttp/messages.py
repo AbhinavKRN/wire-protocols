@@ -72,9 +72,6 @@ class ErrorMessage:
     stream_id: int = 0
 
 
-# -- encoding ---------------------------------------------------------------
-
-
 def encode_request(request: Request, stream_id: int, *, max_data: int = MAX_FRAME_SIZE):
     validate_path(request.path)
     if request.method not in METHOD_BY_NAME:
@@ -132,9 +129,6 @@ def _frames(
         payload=last.payload,
     )
     return frames
-
-
-# -- decoding ---------------------------------------------------------------
 
 
 def decode_request_head(payload: bytes, stream_id: int) -> Request:
@@ -205,9 +199,6 @@ def validate_path(path: str) -> None:
         raise ValueError("dot segment in path")
 
 
-# -- assembly ---------------------------------------------------------------
-
-
 @dataclass
 class _Pending:
     stream_id: int
@@ -258,8 +249,6 @@ class MessageAssembler:
         if frame.type == FrameType.RESPONSE:
             return self._accept_head(frame, "response")
         return self._accept_data(frame)
-
-    # -- head frames ------------------------------------------------------
 
     def _accept_head(self, frame: Frame, kind: str):
         if kind == "request" and self.role != "server":
@@ -312,8 +301,6 @@ class MessageAssembler:
             raise ConnectionFailure(
                 f"stream id {stream_id} is not greater than {self._highest_stream}"
             )
-
-    # -- data frames ------------------------------------------------------
 
     def _accept_data(self, frame: Frame):
         pending = self._pending.get(frame.stream_id)

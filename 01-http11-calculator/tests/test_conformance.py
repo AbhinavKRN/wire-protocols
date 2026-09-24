@@ -52,7 +52,6 @@ class MarkingScriptTests(unittest.TestCase):
             self.assertEqual(stats["accepted"], 1, "1 TCP handshake")
             self.assertEqual(stats["responses"], 6, "6 responses")
 
-            # Still usable afterwards, which is the real definition of "open".
             self.assertEqual(client.get("/add?a=1&b=1").text, "2")
             self.assertEqual(server.stats.snapshot()["accepted"], 1)
 
@@ -94,7 +93,6 @@ class FeatureSetTests(unittest.TestCase):
             response = client.read_response()
             self.assertEqual(response.status, 400)
             self.assertTrue(response.keep_alive)
-            # The framing was never in doubt, so the connection survives.
             self.assertEqual(client.get("/add?a=2&b=2").text, "4")
             self.assertEqual(server.stats.snapshot()["accepted"], 1)
 
@@ -128,7 +126,6 @@ class FeatureSetTests(unittest.TestCase):
             self.assertEqual(response.status, 200)
             self.assertEqual(response.headers["content-length"], "1", "length of the absent body")
             self.assertEqual(response.body, b"")
-            # And the connection is still framed correctly afterwards.
             self.assertEqual(client.get("/add?a=2&b=3").text, "5")
 
 

@@ -26,8 +26,8 @@ from .http.response import Response
 @dataclass
 class Config:
     idle_timeout: float = 15.0
-    # Apache calls this MaxKeepAliveRequests. Without it, one client can hold
-    # a worker thread until the heat death of the universe for free.
+    # Apache calls this MaxKeepAliveRequests. Without it one client can hold a
+    # worker thread open for as long as it likes.
     max_requests_per_connection: int = 1000
     recv_size: int = 65536
     limits: Limits = field(default_factory=lambda: DEFAULT_LIMITS)
@@ -73,8 +73,6 @@ class ConnectionHandler:
                 parser.feed(data)
         finally:
             self._close()
-
-    # -- draining ---------------------------------------------------------
 
     def _drain(self, parser: RequestParser) -> tuple[list[bytes], bool]:
         """Every complete request currently in the buffer, answered in order."""
@@ -140,8 +138,6 @@ class ConnectionHandler:
             self.stats.record_response()
         except OSError:
             pass
-
-    # -- teardown ---------------------------------------------------------
 
     def _close(self) -> None:
         with contextlib.suppress(OSError):

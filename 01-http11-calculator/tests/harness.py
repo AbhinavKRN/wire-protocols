@@ -61,8 +61,6 @@ class RawClient:
         self.sock.settimeout(timeout)
         self._buf = bytearray()
 
-    # -- sending ----------------------------------------------------------
-
     def send(self, data: bytes) -> None:
         self.sock.sendall(data)
 
@@ -79,8 +77,6 @@ class RawClient:
     def get(self, target: str, **kwargs) -> HttpResponse:
         self.send(self.request("GET", target, **kwargs))
         return self.read_response()
-
-    # -- receiving --------------------------------------------------------
 
     def _fill(self) -> None:
         data = self.sock.recv(65536)
@@ -117,8 +113,6 @@ class RawClient:
 
     def read_responses(self, count: int) -> list[HttpResponse]:
         return [self.read_response() for _ in range(count)]
-
-    # -- connection state --------------------------------------------------
 
     @property
     def buffered(self) -> int:

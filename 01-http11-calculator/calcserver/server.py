@@ -73,8 +73,6 @@ class Server:
         self._live_sockets: set[socket.socket] = set()
         self._lock = threading.Lock()
 
-    # -- lifecycle --------------------------------------------------------
-
     def start(self) -> Server:
         listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         if os.name == "nt":
@@ -135,8 +133,6 @@ class Server:
 
     def __exit__(self, *exc) -> None:
         self.shutdown()
-
-    # -- accepting --------------------------------------------------------
 
     def _accept_loop(self) -> None:
         assert self._listener is not None

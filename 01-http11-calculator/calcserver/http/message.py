@@ -60,7 +60,6 @@ class Request:
     body: bytes = b""
     path: str = "/"
     query_string: str = ""
-    # Framing outcome, recorded for logging and for the connection layer.
     framing: str = "length"  # "length" | "chunked" | "none"
     raw_length: int = 0  # bytes this message occupied on the wire
     trailers: Headers = field(default_factory=Headers)

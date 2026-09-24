@@ -103,8 +103,6 @@ class RequestParser:
         self._blank_lines = 0
         self._head_bytes = 0
 
-    # -- input ------------------------------------------------------------
-
     def feed(self, data: bytes) -> None:
         self._buf += data
 
@@ -121,8 +119,6 @@ class RequestParser:
         self._buf.clear()
         self._scan = 0
         self._head = None
-
-    # -- output -----------------------------------------------------------
 
     def next_request(self) -> Request | None:
         """One complete request, or None if more bytes are needed.
@@ -158,8 +154,6 @@ class RequestParser:
             raw_length=head.head_bytes + len(body),
             trailers=head.trailers,
         )
-
-    # -- head -------------------------------------------------------------
 
     def _take_head(self) -> bytes | None:
         # RFC 9112 3.5: a server should ignore at least one empty line before
@@ -331,8 +325,6 @@ class RequestParser:
 
         return "none", 0
 
-    # -- body -------------------------------------------------------------
-
     def _take_body(self, head: _Head) -> bytes | None:
         if head.framing == "chunked":
             return self._take_chunked_body(head)
@@ -342,7 +334,6 @@ class RequestParser:
             return b""
         if len(self._buf) < need:
             return None
-        # Exactly `need` bytes. The whole assignment is on this line.
         body = bytes(self._buf[:need])
         del self._buf[:need]
         return body

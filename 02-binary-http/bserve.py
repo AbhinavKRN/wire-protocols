@@ -91,7 +91,6 @@ class StaticFiles:
             ) from exc
 
         if real != self.root and self.root not in real.parents:
-            # Belt and braces: nothing above should be able to get here.
             raise StreamFailure("path escapes the document root", stream_id=stream_id)
 
         if real.is_dir():

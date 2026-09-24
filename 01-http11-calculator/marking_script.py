@@ -64,7 +64,6 @@ def main() -> int:
         shown = body.decode("utf-8", "replace") if status == 200 else ""
         print(f"{'ok  ' if ok else 'FAIL'} {method:4} {target:18} -> {status}  {shown}")
 
-    # The part that is actually being marked.
     sock.setblocking(False)
     try:
         still_open = bool(sock.recv(1, socket.MSG_PEEK))

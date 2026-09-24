@@ -142,7 +142,6 @@ class ConnectionLifetimeTests(unittest.TestCase):
     def test_idle_connection_is_reaped(self):
         with ServerFixture(idle_timeout=0.4) as server, RawClient(server.address) as client:
             self.assertEqual(client.get("/add?a=1&b=1").text, "2")
-            # Say nothing. A kept-open connection is not an open-ended lease.
             self.assertTrue(client.wait_until_closed(3.0))
             self.assertEqual(server.stats.snapshot()["responses"], 1)
 

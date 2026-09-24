@@ -140,7 +140,6 @@ class FramingTests(unittest.TestCase):
         parser.feed(wire)
         request = parser.next_request()
         self.assertEqual(request.body, body)
-        # Byte n+1 is still in the buffer, untouched.
         self.assertEqual(bytes(parser._buf), b"THIS BELONGS TO THE NEXT REQUEST")
 
     def test_two_requests_in_one_packet(self):

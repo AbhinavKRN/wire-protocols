@@ -41,10 +41,8 @@ class PathTraversalTests(unittest.TestCase):
             frames = peer.read_message_frames()
             response = decode_response_head(frames[0].payload, 1)
             self.assertEqual(response.status, status, f"{path!r} should be {status}")
-            # Stream-level: the answer is a refusal, not a disconnection.
             self.assertTrue(peer.is_open(), "a bad path must not cost the connection")
 
-            # And the connection still works afterwards.
             peer.send_frames(encode_request(Request(path="/hello.txt"), 3))
             self.assertEqual(
                 decode_response_head(peer.read_message_frames()[0].payload, 3).status, 200

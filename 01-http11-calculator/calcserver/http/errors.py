@@ -33,9 +33,6 @@ class HttpError(Exception):
         return text.encode("utf-8", "replace")
 
 
-# --- semantic: the frame was fine, the content was not ----------------------
-
-
 class BadRequest(HttpError):
     status = 400
     reason = "Bad Request"
@@ -61,9 +58,6 @@ class RequestTimeout(HttpError):
     status = 408
     reason = "Request Timeout"
     close = True
-
-
-# --- framing: we lost the message boundary ----------------------------------
 
 
 class MalformedMessage(BadRequest):

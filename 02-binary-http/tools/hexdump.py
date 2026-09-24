@@ -179,9 +179,6 @@ def _annotate_header_block(reader: ByteReader, payload: bytes, base: int) -> lis
     return out
 
 
-# -- rendering --------------------------------------------------------------
-
-
 def render(annotations: list[Annotation], *, max_bytes: int = 16) -> str:
     lines = []
     for item in annotations:

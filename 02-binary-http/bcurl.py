@@ -175,8 +175,6 @@ class Bcurl:
 
         return result
 
-    # -- output -----------------------------------------------------------
-
     def _note(self, text: str) -> None:
         if self.verbose:
             print(text, file=self.trace)
@@ -227,8 +225,6 @@ def main(argv: list[str] | None = None) -> int:
 
     authorities = {target.authority for target in targets}
     if len(authorities) > 1:
-        # Refusing this is the point, not a limitation: a second authority
-        # would mean a second connection.
         print(
             f"bcurl: all URLs must share one host:port, got {sorted(authorities)}",
             file=sys.stderr,
