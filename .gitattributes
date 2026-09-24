@@ -1,0 +1,19 @@
+# Normalise to LF in the repository; check out native unless stated otherwise.
+* text=auto
+
+# A shebang followed by a carriage return is not a shebang: Linux reports
+# "bad interpreter: /bin/sh^M". These two must stay LF on every platform.
+02-binary-http/bserve text eol=lf
+02-binary-http/bcurl  text eol=lf
+*.sh                  text eol=lf
+
+# cmd.exe is the opposite case and wants CRLF.
+*.cmd text eol=crlf
+*.bat text eol=crlf
+*.ps1 text eol=crlf
+
+# Conformance vectors are bytes described as text. Nothing may rewrite them.
+*.jsonl text eol=lf
+
+# Keep diffs of the generated hexdump readable rather than "binary".
+*.md text diff=markdown
