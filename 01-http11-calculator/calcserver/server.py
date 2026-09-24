@@ -76,14 +76,12 @@ class Server:
     def start(self) -> Server:
         listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         if os.name == "nt":
-            # SO_REUSEADDR on Windows means "let anyone steal this port",
-            # which is not what it means on POSIX. This is the intended one.
             listener.setsockopt(socket.SOL_SOCKET, socket.SO_EXCLUSIVEADDRUSE, 1)
         else:
             listener.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         listener.bind((self.host, self.port))
         listener.listen(self.backlog)
-        listener.settimeout(0.25)  # so the accept loop can notice shutdown
+        listener.settimeout(0.25)
         self._listener = listener
         self.port = listener.getsockname()[1]
 
@@ -114,8 +112,6 @@ class Server:
         if self._listener is not None:
             with contextlib.suppress(OSError):
                 self._listener.close()
-        # Unblock any worker parked in recv(). Closing the socket under the
-        # thread is blunt but it is the only portable way to interrupt recv.
         with self._lock:
             sockets = list(self._live_sockets)
             workers = list(self._workers)
@@ -160,7 +156,7 @@ class Server:
         handler = ConnectionHandler(sock, addr, self.router, self.config, self.stats, self.log)
         try:
             handler.run()
-        except Exception:  # noqa: BLE001 - one bad connection must not matter
+        except Exception:  # noqa: BLE001
             self.log.exception("connection handler crashed")
         finally:
             with self._lock:

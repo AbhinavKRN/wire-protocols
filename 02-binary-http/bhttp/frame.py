@@ -16,7 +16,7 @@ from .errors import ConnectionFailure
 
 PREFACE = b"BHT1"
 HEADER_SIZE = 8
-MAX_FRAME_SIZE = 65535  # payload bytes, per SPEC section 2.1
+MAX_FRAME_SIZE = 65535
 
 FLAG_END_MESSAGE = 0x01
 
@@ -41,7 +41,7 @@ class Frame:
     flags: int = 0
     stream_id: int = 0
     payload: bytes = b""
-    reserved: int = 0  # kept only so a hexdump can show what arrived
+    reserved: int = 0
 
     @property
     def end_message(self) -> bool:
@@ -112,8 +112,6 @@ class FrameReader:
         """The next complete frame, or None if more bytes are needed."""
         if self._need_preface:
             if len(self._buf) < len(PREFACE):
-                # Fail as soon as the bytes so far cannot become the preface,
-                # rather than waiting for a fourth byte that will not help.
                 if not PREFACE.startswith(bytes(self._buf)):
                     raise ConnectionFailure("connection preface is not BHT1")
                 return None
@@ -127,8 +125,6 @@ class FrameReader:
 
         length, type_, flags, reserved, stream_id = decode_header(bytes(self._buf[:HEADER_SIZE]))
         if length > self.max_frame_size:
-            # Refused before a single payload byte is buffered: the cap is
-            # worthless if you have to receive the frame to enforce it.
             raise ConnectionFailure(
                 f"frame length {length} exceeds MAX_FRAME_SIZE {self.max_frame_size}"
             )

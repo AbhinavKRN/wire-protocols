@@ -30,7 +30,6 @@ Operation = Callable[[int, int], float | int]
 def _div(a: int, b: int) -> float | int:
     if b == 0:
         raise BadRequest("division by zero")
-    # Stay in the integers when the division is exact; 9/3 is 3, not 3.0.
     return a // b if a % b == 0 else a / b
 
 

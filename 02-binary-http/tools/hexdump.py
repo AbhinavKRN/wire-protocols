@@ -92,7 +92,7 @@ def _annotate_payload(payload: bytes, type_: int, base: int) -> list[Annotation]
             return _annotate_error(payload, base)
         if type_ == FrameType.DATA:
             return [Annotation(base, payload, f"Body bytes ({len(payload)})")]
-    except Exception as exc:  # noqa: BLE001 - a dump of bad bytes is still useful
+    except Exception as exc:  # noqa: BLE001
         return [Annotation(base, payload, f"undecodable payload: {exc}")]
     return [Annotation(base, payload, "opaque payload of an unknown frame type")]
 

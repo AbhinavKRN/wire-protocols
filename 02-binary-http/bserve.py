@@ -41,7 +41,6 @@ SERVER_TOKEN = "bserve/1.0"
 ALLOWED_METHODS = ("GET", "HEAD")
 DEFAULT_INDEX = "index.html"
 
-# Names that are devices rather than files on Windows, whatever the extension.
 WINDOWS_DEVICE_NAMES = frozenset(
     ["con", "prn", "aux", "nul"]
     + [f"com{n}" for n in range(1, 10)]
@@ -69,12 +68,7 @@ class StaticFiles:
         segments = [segment for segment in decoded.split("/") if segment]
 
         for segment in segments:
-            # The frame decoder already rejected dot segments, backslashes and
-            # control characters (SPEC 5.1). These are the host filesystem's
-            # own escape hatches, which the protocol knows nothing about.
             if ":" in segment:
-                # "C:/secrets" would make pathlib discard the root entirely,
-                # and "file.txt:stream" is an NTFS alternate data stream.
                 raise StreamFailure("drive or stream marker in path", stream_id=stream_id)
             if segment.split(".")[0].lower() in WINDOWS_DEVICE_NAMES:
                 raise StreamFailure("reserved device name in path", stream_id=stream_id)
@@ -82,8 +76,6 @@ class StaticFiles:
         candidate = self.root.joinpath(*segments) if segments else self.root
 
         try:
-            # resolve() follows symlinks, so a link pointing out of the root
-            # is caught by the containment test below rather than followed.
             real = candidate.resolve()
         except OSError as exc:
             raise StreamFailure(
@@ -152,8 +144,6 @@ class Connection:
             self.sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
 
             while True:
-                # Drain every frame already buffered before asking for more:
-                # the same rule as Part A, and for the same reason.
                 while True:
                     try:
                         frame = reader.next_frame()
@@ -164,9 +154,6 @@ class Connection:
                         break
 
                     if not frame.known:
-                        # SPEC 3.1. Nothing to do: the reader already stepped
-                        # over exactly `length` bytes without understanding
-                        # a single one of them.
                         log.info("skipped unknown frame type 0x%02x", frame.type)
                         self.stats.bump("skipped_unknown")
                         continue
@@ -242,7 +229,6 @@ class Connection:
             ("date", formatdate(usegmt=True)),
             ("server", SERVER_TOKEN),
         ]
-        # SPEC 5.6: HEAD keeps the content-length and drops the bytes.
         body = b"" if request.method == "HEAD" else payload
         return Response(status=200, headers=headers, body=body)
 

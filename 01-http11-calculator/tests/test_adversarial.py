@@ -31,7 +31,6 @@ class DeliveryShapeTests(unittest.TestCase):
                 client.send_slowly(request, chunk=1)
                 self.assertEqual(client.read_response().status, EXPECTED_STATUSES[0])
                 break
-            # The rest in one dribble, answers read afterwards.
             client.send_slowly(b"".join(SIX_REQUESTS[1:]), chunk=1)
             statuses = [r.status for r in client.read_responses(5)]
             self.assertEqual(statuses, EXPECTED_STATUSES[1:])
@@ -105,8 +104,6 @@ class BodyFramingTests(unittest.TestCase):
         with ServerFixture() as server, RawClient(server.address) as client:
             client.send(wire)
             self.assertEqual(client.read_response().status, 405)
-            # If the chunk framing were wrong, this would parse from the
-            # middle of the previous body.
             self.assertEqual(client.get("/add?a=2&b=3").text, "5")
             self.assertEqual(server.stats.snapshot()["accepted"], 1)
 
@@ -147,7 +144,7 @@ class ConnectionLifetimeTests(unittest.TestCase):
 
     def test_half_sent_request_gets_408(self):
         with ServerFixture(idle_timeout=0.4) as server, RawClient(server.address) as client:
-            client.send(b"GET /add?a=1&b=1 HTTP/1.1\r\nHost: localhost\r\n")  # no terminator
+            client.send(b"GET /add?a=1&b=1 HTTP/1.1\r\nHost: localhost\r\n")
             response = client.read_response()
             self.assertEqual(response.status, 408)
             self.assertEqual(response.headers["connection"], "close")
@@ -226,8 +223,8 @@ class HostileInputTests(unittest.TestCase):
     def test_a_dead_connection_does_not_kill_the_server(self):
         with ServerFixture() as server:
             victim = RawClient(server.address)
-            victim.send(b"GET /add?a=1&b=1 HTTP/1.1\r\nHost: x\r\n")  # half a request
-            victim.sock.close()  # and vanish
+            victim.send(b"GET /add?a=1&b=1 HTTP/1.1\r\nHost: x\r\n")
+            victim.sock.close()
 
             with RawClient(server.address) as client:
                 self.assertEqual(client.get("/add?a=2&b=3").text, "5")

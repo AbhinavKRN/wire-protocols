@@ -39,8 +39,6 @@ from .message import Headers, Request
 CRLF = b"\r\n"
 HEAD_TERMINATOR = b"\r\n\r\n"
 
-# RFC 9110 tchar. Anything outside this in a method or field name is a
-# protocol violation, not an oddity to be tolerated.
 TCHAR = frozenset(
     b"!#$%&'*+-.^_`|~0123456789"
     b"abcdefghijklmnopqrstuvwxyz"
@@ -84,10 +82,6 @@ class _Head:
     framing: str
     content_length: int
     head_bytes: int
-    # A semantic error found while parsing the head (a missing Host, say).
-    # It is *not* raised yet: the body still has to be drained off the socket
-    # first, or the stream is left misaligned and the next request -- and every
-    # request after it -- is parsed from the middle of this one's body.
     deferred_error: HttpError | None = None
     trailers: Headers = field(default_factory=Headers)
 
@@ -98,7 +92,7 @@ class RequestParser:
     def __init__(self, limits: Limits = DEFAULT_LIMITS):
         self.limits = limits
         self._buf = bytearray()
-        self._scan = 0  # how far into _buf we have already looked for CRLFCRLF
+        self._scan = 0
         self._head: _Head | None = None
         self._blank_lines = 0
         self._head_bytes = 0
@@ -139,7 +133,6 @@ class RequestParser:
 
         self._head = None
         if head.deferred_error is not None:
-            # Body is consumed, stream is aligned again; now it is safe to fail.
             raise head.deferred_error
 
         return Request(
@@ -156,8 +149,6 @@ class RequestParser:
         )
 
     def _take_head(self) -> bytes | None:
-        # RFC 9112 3.5: a server should ignore at least one empty line before
-        # the request line. Bounded, because "at least one" is not "forever".
         while self._buf[:2] == CRLF:
             self._blank_lines += 1
             if self._blank_lines > self.limits.max_leading_blank_lines:
@@ -168,11 +159,6 @@ class RequestParser:
         start = max(0, self._scan - (len(HEAD_TERMINATOR) - 1))
         index = self._buf.find(HEAD_TERMINATOR, start)
 
-        # A peer using bare LF as a line ending will never send our
-        # terminator, so without this it would sit here until the idle
-        # timeout. Fail it the moment the evidence arrives instead. Only the
-        # head can be in the buffer at this point -- no body bytes precede
-        # the head terminator -- so an LF LF here is unambiguous.
         lf_index = self._buf.find(b"\n\n", start)
         if lf_index != -1 and (index == -1 or lf_index < index):
             raise MalformedMessage("bare LF used as a line terminator")
@@ -196,9 +182,6 @@ class RequestParser:
     def _parse_head(self, head: bytes) -> _Head:
         lines = head.split(CRLF)
         for line in lines:
-            # split() on CRLF leaves any bare CR or bare LF embedded in a line.
-            # Accepting those is how two intermediaries end up disagreeing
-            # about where a message ended, which is request smuggling.
             if b"\n" in line or b"\r" in line:
                 raise MalformedMessage("bare CR or LF in head")
 
@@ -207,13 +190,10 @@ class RequestParser:
 
         deferred: HttpError | None = None
 
-        # RFC 9112 3.2: HTTP/1.1 requires exactly one Host.
         host_count = headers.count("host")
         if host_count > 1:
-            # Two Hosts is an attack, not a mistake: hang up.
             raise MalformedMessage("multiple Host headers")
         if host_count == 0 and version == "HTTP/1.1":
-            # One Host short, but perfectly framed. Answer 400 and stay up.
             deferred = BadRequest("HTTP/1.1 request without a Host header")
 
         framing, content_length = self._decide_framing(headers)
@@ -253,7 +233,6 @@ class RequestParser:
             raise VersionNotSupported(raw_version.decode("ascii", "replace"))
         version = raw_version.decode("ascii")
 
-        # origin-form only. absolute-form is for proxies and we are not one.
         if not raw_target.startswith(b"/"):
             raise MalformedMessage("target must be origin-form (start with /)")
         if any(c < 0x21 or c > 0x7E for c in raw_target):
@@ -268,8 +247,6 @@ class RequestParser:
             if not line:
                 continue
             if line[0:1] in (b" ", b"\t"):
-                # obs-fold. Deleted from HTTP by RFC 9112 5.2; rejecting it is
-                # the modern requirement for anything but a message/http body.
                 raise MalformedMessage("obsolete line folding in header block")
             if len(items) >= self.limits.max_header_count:
                 raise HeaderFieldsTooLarge(f"more than {self.limits.max_header_count} fields")
@@ -278,7 +255,6 @@ class RequestParser:
             if not sep:
                 raise MalformedMessage("header field without a colon")
             if not raw_name or not all(c in TCHAR for c in raw_name):
-                # Catches "Name : value" too: the trailing space is not a tchar.
                 raise MalformedMessage("header field name is not a token")
 
             value = raw_value.strip(b" \t")
@@ -296,7 +272,6 @@ class RequestParser:
         has_cl = "content-length" in headers
 
         if has_te and has_cl:
-            # The classic smuggling pair: two answers to one question.
             raise MalformedMessage("both Transfer-Encoding and Content-Length")
 
         if has_te:
@@ -316,7 +291,6 @@ class RequestParser:
                 raise MalformedMessage("multiple Content-Length headers")
             raw = values[0]
             if not raw or not raw.isdigit() or not raw.isascii():
-                # No sign, no spaces, no hex, no "5, 5".
                 raise MalformedMessage(f"Content-Length is not a bare decimal: {raw!r}")
             length = int(raw)
             if length > self.limits.max_body:
@@ -386,7 +360,7 @@ class RequestParser:
             line_end = buf.find(CRLF, pos)
             if line_end == -1:
                 return Headers(), None
-            if line_end == pos:  # empty line: end of trailer section
+            if line_end == pos:
                 return self._parse_fields(items), line_end + 2
             items.append(bytes(buf[pos:line_end]))
             if len(items) > self.limits.max_header_count:
@@ -400,6 +374,4 @@ def _is_hex(data: bytes) -> bool:
 
 def _split_target(target: str) -> tuple[str, str]:
     path, _, query = target.partition("?")
-    # Percent-decoding belongs to the path, not to the query: decoding the
-    # query here would make an encoded %26 indistinguishable from a real &.
     return unquote(path), query

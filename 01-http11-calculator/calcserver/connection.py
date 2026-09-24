@@ -26,8 +26,6 @@ from .http.response import Response
 @dataclass
 class Config:
     idle_timeout: float = 15.0
-    # Apache calls this MaxKeepAliveRequests. Without it one client can hold a
-    # worker thread open for as long as it likes.
     max_requests_per_connection: int = 1000
     recv_size: int = 65536
     limits: Limits = field(default_factory=lambda: DEFAULT_LIMITS)
@@ -47,8 +45,6 @@ class ConnectionHandler:
         parser = RequestParser(self.config.limits)
         try:
             self.sock.settimeout(self.config.idle_timeout)
-            # A request/response protocol on a kept-open connection is exactly
-            # the case where Nagle's algorithm and delayed ACK interact badly.
             self.sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
 
             while True:
@@ -67,8 +63,6 @@ class ConnectionHandler:
                     return
 
                 if not data:
-                    # Orderly shutdown from the peer. If they stopped
-                    # mid-message, that is their problem, not a 400.
                     return
                 parser.feed(data)
         finally:
@@ -85,11 +79,9 @@ class ConnectionHandler:
                 self.stats.record_response()
                 self.log.info("%s -> %d %s", self._peer(), error.status, error.detail)
                 if error.close:
-                    # We no longer know where the next message starts, so
-                    # whatever is in the buffer is not a message.
                     parser.discard()
                     return out, True
-                continue  # framing intact: the next request is right there
+                continue
 
             if request is None:
                 return out, False
@@ -114,7 +106,7 @@ class ConnectionHandler:
             response = self.router.dispatch(request)
         except HttpError as error:
             response = Response.from_error(error)
-        except Exception:  # noqa: BLE001 - a bug here must not kill the server
+        except Exception:  # noqa: BLE001
             self.log.exception("unhandled error serving %s", request.target)
             response = Response(status=500, body=b"500 Internal Server Error")
 
@@ -127,8 +119,6 @@ class ConnectionHandler:
 
     def _on_idle_timeout(self, parser: RequestParser) -> None:
         if not parser.mid_message:
-            # A merely idle peer gets hung up on quietly. Sending 408 to a
-            # client that is about to reuse the connection just races it.
             self.log.info("%s idle timeout, closing", self._peer())
             return
         error = RequestTimeout("request not completed within the idle timeout")
@@ -141,8 +131,6 @@ class ConnectionHandler:
 
     def _close(self) -> None:
         with contextlib.suppress(OSError):
-            # Half-close first so the peer reads our last response instead of
-            # an RST that discards it.
             self.sock.shutdown(socket.SHUT_WR)
         with contextlib.suppress(OSError):
             self.sock.close()

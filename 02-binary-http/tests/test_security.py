@@ -61,7 +61,6 @@ class PathTraversalTests(unittest.TestCase):
         self.assert_rejected("/%2e%2e/SPEC.md")
 
     def test_double_encoded_dot_dot(self):
-        # %252e decodes to %2e, which is *not* decoded again. One pass only.
         self.assert_rejected("/%252e%252e/SPEC.md", status=404)
 
     def test_single_dot_segment(self):
@@ -116,8 +115,6 @@ class FrameLevelAttackTests(unittest.TestCase):
 
     def test_oversized_frame_length_is_refused_without_buffering(self):
         with ServerFixture() as server, RawPeer(server.address) as peer:
-            # Length 0x010000 = 65536, one over MAX_FRAME_SIZE. Note we never
-            # send the payload: the server must reject on the header alone.
             peer.send(unhex("01 00 00 01 01 00 00 01"))
             frame = peer.read_frame()
             self.assertEqual(frame.type, FrameType.ERROR)
@@ -158,7 +155,7 @@ class FrameLevelAttackTests(unittest.TestCase):
     def test_a_truncated_frame_never_produces_a_partial_message(self):
         with ServerFixture() as server, RawPeer(server.address) as peer:
             raw = encode_request(Request(path="/hello.txt"), 1)[0].encode()
-            peer.send(raw[:-3])  # three bytes short
+            peer.send(raw[:-3])
             self.assertTrue(peer.is_open(0.4), "the server must simply wait")
             peer.send(raw[-3:])
             self.assertEqual(

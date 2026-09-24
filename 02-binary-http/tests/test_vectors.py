@@ -170,7 +170,7 @@ class InvalidVectorTests(unittest.TestCase):
         A stream-level rejection must not poison the connection: the frame
         boundaries were never in question, so the next request still parses.
         """
-        bad = unhex("00 00 05 01 01 00 00 01  00 00 01 2f 00")  # method 0x00
+        bad = unhex("00 00 05 01 01 00 00 01  00 00 01 2f 00")
         good = unhex("00 00 09 01 01 00 00 03  01 00 01 2f 01 83 00 01 78")
 
         reader = FrameReader(expect_preface=True)

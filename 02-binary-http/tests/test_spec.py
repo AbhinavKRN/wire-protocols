@@ -60,7 +60,6 @@ class SpecMatchesCodeTests(unittest.TestCase):
         vectors = (
             Path(__file__).resolve().parent / "vectors" / "invalid.jsonl"
         ).read_text().strip().splitlines()
-        # 13 items in the list, the last of which is the must-*not*-reject one.
         self.assertEqual(len(items), 13)
         self.assertGreaterEqual(len(vectors), len(items) - 1)
 

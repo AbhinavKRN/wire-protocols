@@ -60,8 +60,8 @@ class Request:
     body: bytes = b""
     path: str = "/"
     query_string: str = ""
-    framing: str = "length"  # "length" | "chunked" | "none"
-    raw_length: int = 0  # bytes this message occupied on the wire
+    framing: str = "length"
+    raw_length: int = 0
     trailers: Headers = field(default_factory=Headers)
 
     @property

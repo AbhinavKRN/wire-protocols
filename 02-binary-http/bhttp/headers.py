@@ -14,19 +14,18 @@ from __future__ import annotations
 
 from .frame import ByteReader
 
-#: Index 0 is unused so that a zero byte can mean "literal name follows".
 STATIC_TABLE: tuple[str, ...] = (
-    "",  # 0 - never sent
-    "content-length",  # 1
-    "content-type",  # 2
-    "host",  # 3
-    "date",  # 4
-    "server",  # 5
-    "connection",  # 6
-    "user-agent",  # 7
-    "accept",  # 8
-    "last-modified",  # 9
-    "cache-control",  # 10
+    "",
+    "content-length",
+    "content-type",
+    "host",
+    "date",
+    "server",
+    "connection",
+    "user-agent",
+    "accept",
+    "last-modified",
+    "cache-control",
 )
 
 INDEX_BY_NAME = {name: index for index, name in enumerate(STATIC_TABLE) if index}
@@ -100,8 +99,6 @@ def decode_entry(reader: ByteReader) -> tuple[str, str]:
         name = reader.take(length).decode("latin-1")
         _check_name(name)
     else:
-        # Reserved for a dynamic table in a future version. Until then it is
-        # not something a v1 receiver may guess at.
         raise HeaderFormatError(f"unassigned header entry prefix 0x{prefix:02x}")
 
     value = reader.take(reader.u16()).decode("latin-1")

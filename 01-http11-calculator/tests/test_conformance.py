@@ -107,13 +107,13 @@ class FeatureSetTests(unittest.TestCase):
     def test_parameter_validation(self):
         with ServerFixture() as server, RawClient(server.address) as client:
             for target in [
-                "/add?a=1",  # missing b
-                "/add",  # missing both
-                "/add?a=1&b=2&c=3",  # unexpected parameter
-                "/add?a=1&a=2&b=3",  # duplicate parameter
-                "/add?a=1.5&b=2",  # not an integer
-                "/add?a=&b=2",  # empty
-                "/add?a",  # no '=' at all
+                "/add?a=1",
+                "/add",
+                "/add?a=1&b=2&c=3",
+                "/add?a=1&a=2&b=3",
+                "/add?a=1.5&b=2",
+                "/add?a=&b=2",
+                "/add?a",
             ]:
                 with self.subTest(target=target):
                     self.assertEqual(client.get(target).status, 400)

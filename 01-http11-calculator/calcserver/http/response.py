@@ -55,8 +55,6 @@ class Response:
         lines.append(f"Date: {formatdate(usegmt=True)}")
         lines.append(f"Server: {SERVER_TOKEN}")
         lines.append(f"Content-Type: {self.content_type}")
-        # Announced even for HEAD, where it describes the body we are not
-        # sending; that is what makes HEAD useful.
         lines.append(f"Content-Length: {len(self.body)}")
         lines.append(f"Connection: {'close' if self.close else 'keep-alive'}")
         for name, value in self.headers:

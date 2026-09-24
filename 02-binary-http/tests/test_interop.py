@@ -63,7 +63,6 @@ class FetchTests(unittest.TestCase):
             self.assertEqual(
                 response.header("content-length"), str(len((WWW / "hello.txt").read_bytes()))
             )
-            # SPEC 5.6: head frame only, no DATA frame for the absent body.
             self.assertEqual(result.frames_received, 1)
 
     def test_three_urls_share_one_connection(self):
@@ -90,7 +89,7 @@ class FetchTests(unittest.TestCase):
 
     def test_a_large_body_arrives_in_several_data_frames(self):
         with tempfile.TemporaryDirectory() as root:
-            payload = bytes(range(256)) * 900  # 230400 bytes, > 3 frames
+            payload = bytes(range(256)) * 900
             (Path(root) / "big.bin").write_bytes(payload)
             with ServerFixture(root) as server:
                 peer = RawPeer(server.address)

@@ -26,7 +26,7 @@ from bhttp.messages import (
 )
 from support import RawPeer, ServerFixture
 
-FUTURE_TYPE = 0x7F  # unassigned in v1; imagine v2 uses it for SETTINGS
+FUTURE_TYPE = 0x7F
 
 
 def future_frame(payload: bytes = b"\xde\xad\xbe\xef", stream_id: int = 0) -> Frame:
@@ -56,7 +56,7 @@ class ServerSkipsUnknownFrames(unittest.TestCase):
         """The skip has to consume the payload precisely; one byte out and
         the next frame header is read from the middle of the last one."""
         with ServerFixture() as server, RawPeer(server.address) as peer:
-            peer.send_frames([future_frame(payload=bytes(range(256)) * 40)])  # 10240 bytes
+            peer.send_frames([future_frame(payload=bytes(range(256)) * 40)])
             peer.send_frames(encode_request(Request(path="/hello.txt"), 1))
             frames = peer.read_message_frames()
             self.assertEqual(decode_response_head(frames[0].payload, 1).status, 200)
@@ -78,8 +78,6 @@ class ServerSkipsUnknownFrames(unittest.TestCase):
             head, data = encode_request(Request(method="POST", path="/hello.txt", body=b"xy"), 1)
             peer.send_frames([head, future_frame(stream_id=1), data])
             frames = peer.read_message_frames()
-            # POST on a static file is 405, but it is an *answer*: the body
-            # was assembled across the interruption.
             self.assertEqual(decode_response_head(frames[0].payload, 1).status, 405)
             self.assertTrue(peer.is_open())
 
@@ -90,10 +88,10 @@ class ServerSkipsUnknownFrames(unittest.TestCase):
             original = encode_request(Request(path="/hello.txt"), 1)[0]
             polluted = Frame(
                 type=original.type,
-                flags=original.flags | 0x40,  # unassigned bit
+                flags=original.flags | 0x40,
                 stream_id=original.stream_id,
                 payload=original.payload,
-                reserved=0xFF,  # MUST be ignored on receipt
+                reserved=0xFF,
             )
             peer.send_frames([polluted])
             self.assertEqual(

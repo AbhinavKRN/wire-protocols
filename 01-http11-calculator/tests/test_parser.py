@@ -51,8 +51,6 @@ class RequestLineTests(unittest.TestCase):
     def test_percent_decodes_the_path_but_not_the_query(self):
         (request,), _ = parse_all(b"GET /a%64d?a=%261&b=2 HTTP/1.1\r\nHost: x\r\n\r\n")
         self.assertEqual(request.path, "/add")
-        # An encoded ampersand must survive as encoded, or it becomes a
-        # separator and one parameter silently turns into two.
         self.assertEqual(request.query_string, "a=%261&b=2")
 
     def test_tolerates_leading_blank_lines(self):
@@ -163,8 +161,6 @@ class FramingTests(unittest.TestCase):
                 seen.append((request.path, index))
 
         self.assertEqual([path for path, _ in seen], ["/add", "/sub"])
-        # Each request must be reported on the byte that completed it, not
-        # one byte early and not at EOF.
         self.assertEqual(seen[0][1], len(GET_ADD) - 1)
         self.assertEqual(seen[1][1], len(wire) - 1)
 
@@ -239,7 +235,6 @@ class DeferredErrorTests(unittest.TestCase):
         self.assertEqual(caught.exception.status, 400)
         self.assertFalse(caught.exception.close, "a framed message must not cost the connection")
 
-        # The stream is still aligned: the next request parses cleanly.
         following = parser.next_request()
         self.assertEqual(following.path, "/sub")
 

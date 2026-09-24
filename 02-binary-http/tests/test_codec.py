@@ -89,7 +89,7 @@ class FrameReaderTests(unittest.TestCase):
 
     def test_bad_preface_is_caught_on_the_first_wrong_byte(self):
         reader = FrameReader(expect_preface=True)
-        reader.feed(b"G")  # not even a complete preface yet
+        reader.feed(b"G")
         with self.assertRaises(ConnectionFailure):
             reader.next_frame()
 

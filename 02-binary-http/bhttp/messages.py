@@ -189,11 +189,8 @@ def validate_path(path: str) -> None:
 
     decoded = unquote(path.split("?", 1)[0])
     if any(ord(char) < 0x20 or ord(char) == 0x7F for char in decoded):
-        # %00 and friends: legal before decoding, lethal after.
         raise ValueError("control character in percent-decoded path")
     if "\\" in decoded:
-        # A backslash is not a path separator here, but it is on the file
-        # system this server is running on. Refuse the ambiguity.
         raise ValueError("backslash in path")
     if any(segment in (".", "..") for segment in decoded.split("/")):
         raise ValueError("dot segment in path")
@@ -204,7 +201,7 @@ class _Pending:
     stream_id: int
     head: Request | Response
     body: bytearray = field(default_factory=bytearray)
-    draining: bool = False  # head was rejected; swallow the body, then drop it
+    draining: bool = False
 
 
 class MessageAssembler:
@@ -225,7 +222,7 @@ class MessageAssembler:
         self._pending: dict[int, _Pending] = {}
         self._completed: set[int] = set()
         self._highest_stream = 0
-        self._expected: dict[int, bool] = {}  # client side: stream -> expects a body
+        self._expected: dict[int, bool] = {}
 
     def open_stream(self, stream_id: int, *, expect_body: bool = True) -> None:
         """Client-side: record a request we have sent, so that a response on
@@ -276,9 +273,6 @@ class MessageAssembler:
             )
         except StreamFailure:
             if not frame.end_message:
-                # The head is unusable but the body is still coming. Swallow
-                # it so the peer's framing stays valid, then discard it --
-                # a bad message must not cost the connection.
                 self._pending[stream_id] = _Pending(
                     stream_id, Request(stream_id=stream_id), draining=True
                 )

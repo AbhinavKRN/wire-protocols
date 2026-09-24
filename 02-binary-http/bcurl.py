@@ -39,10 +39,10 @@ DEFAULT_PORT = 9000
 
 EXIT_OK = 0
 EXIT_USAGE = 2
-EXIT_CLIENT_ERROR = 4  # the server said 4xx
-EXIT_SERVER_ERROR = 5  # the server said 5xx
-EXIT_CONNECT = 7  # never got a usable connection
-EXIT_PROTOCOL = 8  # the peer is not speaking BHT/1
+EXIT_CLIENT_ERROR = 4
+EXIT_SERVER_ERROR = 5
+EXIT_CONNECT = 7
+EXIT_PROTOCOL = 8
 
 
 @dataclass
@@ -123,7 +123,7 @@ class Bcurl:
         self._dump_out(PREFACE, preface=True)
 
         for index, target in enumerate(targets):
-            stream_id = 1 + 2 * index  # SPEC 4.2: odd and strictly increasing
+            stream_id = 1 + 2 * index
             request = Request(
                 method=method,
                 path=target.path,
@@ -259,8 +259,6 @@ def main(argv: list[str] | None = None) -> int:
         print(f"bcurl: server sent ERROR {error.status}: {error.reason}", file=sys.stderr)
 
     with contextlib.ExitStack() as stack:
-        # Bodies go to stdout as bytes, in request order. stdout is not ours
-        # to close, which is the only reason this needs a stack.
         sink = (
             stack.enter_context(open(args.output, "wb")) if args.output else sys.stdout.buffer
         )
