@@ -1,0 +1,3 @@
+#!/bin/sh
+# POSIX shim so the brief's `./bcurl -v localhost:9000/index.html` works verbatim.
+exec python3 "$(dirname "$0")/bcurl.py" "$@"
